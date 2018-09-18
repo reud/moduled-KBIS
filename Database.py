@@ -3,35 +3,38 @@ import sqlite3
 import openpyxl
 import traceback
 import os
-import EnviromentVar
-
+import EnviromentVar as envi
+import Notifer as notif
 
 
 
 class DataBases(object):
     def __init__(self,devmode:bool):
-        self.MAXGEN = 22#const
-        self.MINGEN = 15
-        LINENotifer.Notify.MessageCall('DataBase 1/6 メモリ内のデータベースを確認しています。')
+        self.MAXGEN = envi.KBIS_MAXGEN
+        self.MINGEN = envi.KBIS_MINGEN
+
+        notif.output('DataBase 1/6 メモリ内のデータベースを確認しています。')
+
         try:
-            os.remove(":memory:")
+            os.remove(":memory:")#for memory leak interrupt
         except:
-            pass
-        LINENotifer.Notify.MessageCall('DataBase 2/6 データベースに接続します。')
-        if(devmode):
-            self.twitterBook = '../Tools/Twitter対応リスト.xlsx'
-            self.moneyBook='../Tools/237585_個人支払出納管理簿.xlsx'
-        else:
-            self.twitterBook = '../../KBIS_Workingplace/Twitter対応リスト.xlsx'
-            self.moneyBook='../../KBIS_Workingplace/個人支払出納管理簿.xlsx'
-            #self.twitterBook = '../Tools/Twitter対応リスト.xlsx'
-            #self.moneyBook='../Tools/237585_個人支払出納管理簿.xlsx'
+            notif.output(traceback.format_exc())
+
+        notif.output('DataBase 2/6 データベースに接続します。')
+
+        self.twitterBook = envi.USERLIST_DATA_DIRECTRY
+        self.moneyBook = envi.MANAGEBOOK_PLACE
+
         self.connect = sqlite3.connect(":memory:")
-        LINENotifer.Notify.MessageCall('DataBase 3/6 データベースに接続しました。テーブルの作成、ユーザの追加を行います。')
+
+        notif.output('DataBase 3/6 データベースに接続しました。テーブルの作成、ユーザの追加を行います。')
+
         self.cursor = self.connect.cursor()
+        #Table Make
         create_table = '''create table users(gen int,realname TEXT,twittername TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,twittername)) '''
         self.sql = 'insert into users (gen,realname,twittername,money,remarks,authority) values (?,?,?,?,?,?)'
-        LINENotifer.Notify.MessageCall('DataBase 4/6 ユーザの追加を終了しました。エクセルファイルを読み込みます。')
+
+        notif.output('DataBase 4/6 ユーザの追加を終了しました。エクセルファイルを読み込みます。')
         self.cursor.execute(create_table)
         for i in range(self.MINGEN, self.MAXGEN):
             try:
