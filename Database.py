@@ -100,21 +100,22 @@ class DataBases (object):
                 pass
         moneybook.save (self.moneyBook)
         userbook.save (self.userBook)
+        print(userList)
         return userList
 
     def renew( self ):  # 一回全部消すか・・・
         delete_usersql = '''drop table users'''
-        delete_twittersql = '''drop table TwitterExistsUser'''
+        delete_linesql = '''drop table LINEExistsUser'''
         try:
             self.cursor.execute (delete_usersql)
-            self.cursor.execute (delete_twittersql)
+            self.cursor.execute (delete_linesql)
         except:
             traceback.print_exc ( )
         create_table = '''create table if not exists users(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
         self.cursor.execute (create_table)
         self.sql = 'insert into users (gen,realname,userId,money,remarks,authority) values (?,?,?,?,?,?)'
-        createTwitterUserTable = '''create table if not exists TwitterExistsUser(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
-        self.cursor.execute (createTwitterUserTable)
+        createLINEUserTable = '''create table if not exists LINEExistsUser(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
+        self.cursor.execute (createLINEUserTable)
 
         workbook = openpyxl.load_workbook (self.moneyBook)
         for i in range (self.MINGEN, self.MAXGEN):
@@ -128,12 +129,12 @@ class DataBases (object):
 
         for i in self.cursor.execute ('''select * from users'''):
             print (i)
-        twitterlist = self.Search ('at', 'all')
+        linelist = self.Search ('at', 'all')
 
-        print ('Twitterユーザのテーブルを更新しています・・・')
-        for i in twitterlist:
+        print ('LINEユーザのテーブルを更新しています・・・')
+        for i in linelist:
             print (i)
-        print ('Twitterユーザのテーブルの更新が完了しました。')
+        print ('LINEユーザのテーブルの更新が完了しました。')
 
         select_sql = 'select * from users'
         for row in self.cursor.execute (select_sql):
@@ -141,35 +142,36 @@ class DataBases (object):
         workbook.save (self.moneyBook)
 
     def Search( self, word1: str, word2: str ) -> list:
-        createTwitterUserTable = '''create table if not exists TwitterExistsUser(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
-        self.cursor.execute (createTwitterUserTable)
+        createLINEUserTable = '''create table if not exists LINEExistsUser(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
+        self.cursor.execute (createLINEUserTable)
         uReturnist = [ ]
         select_sql = '''select * from users where userId is not null'''
         for row in self.cursor.execute (select_sql):
             uReturnist.append (row)
             # print(row)
-        select_sql = '''insert or ignore into TwitterExistsUser(gen,realname,userId,money,remarks,authority) values (?,?,?,?,?,?)'''
+        select_sql = '''insert or ignore into LINEExistsUser(gen,realname,userId,money,remarks,authority) values (?,?,?,?,?,?)'''
         self.cursor.executemany (select_sql, uReturnist)
-        select_sql = '''select * from TwitterExistsUser'''
+        select_sql = '''select * from LINEExistsUser'''
         for row in self.cursor.execute (select_sql):
             pass
         returnList = [ ]
         # (word1,word2)
-        # (at,本名 or twitterID or all)
+        # (at,本名 or lineID or all)
         # (Lthan,money)
         # (Hthan,money)
         # (equals,money)
         # (get,root)
+        notif.output(f'Search command is ({word1} {word2})')
         if (word1 == 'at'):
             if (word2 == 'all'):
-                at_all_sql = '''select * from TwitterExistsUser'''
+                at_all_sql = '''select * from LINEExistsUser'''
                 for data in self.cursor.execute (at_all_sql):
                     returnList.append (data)
                 return returnList
-            else:  # 本名 or twitterID
-                print ('{0}をTwitterIDから検索中...'.format (word2))
-                twitterID_sql = '''select userId from TwitterExistsUser'''
-                for data in self.cursor.execute (twitterID_sql):
+            else:  # 本名 or lineID
+                print ('{0}をLINEIDから検索中...'.format (word2))
+                lineID_sql = '''select userId from LINEExistsUser'''
+                for data in self.cursor.execute (lineID_sql):
                     # なんかカッコとかついてるので取る
                     ddata0 = str (data).replace ('(', '')
                     ddata1 = ddata0.replace (')', '')
@@ -177,8 +179,8 @@ class DataBases (object):
                     ddata_final = ddata2.replace (',', '')
                     # ここでddata_finalがアレ
                     if (ddata_final == word2):
-                        print ('twitterIDが一致しました。 そのユーザを取得します。')
-                        userSearch_sql = '''select * from TwitterExistsUser where userId='{0}' '''.format (word2)
+                        print ('lineIDが一致しました。 そのユーザを取得します。')
+                        userSearch_sql = '''select * from LINEExistsUser where userId='{0}' '''.format (word2)
                         if (not self.cursor.execute (userSearch_sql)):
                             raise ValueError ('kasu')
                         reacher = False
@@ -191,7 +193,7 @@ class DataBases (object):
                 notif.output ('LINE userIDは一致しませんでした。本名から検索します。')
                 #
                 notif.output ('{0}を本名から検索中...'.format (word2))
-                realname_sql = '''select realname from TwitterExistsUser'''
+                realname_sql = '''select realname from LINEExistsUser'''
                 for data in self.cursor.execute (realname_sql):
                     # なんかカッコとかついてるので取る
                     ddata0 = str (data).replace ('(', '')
@@ -201,7 +203,7 @@ class DataBases (object):
                     # ここでddata_finalがアレ
                     if (ddata_final == word2):
                         notif.output ('本名が一致しました。 そのユーザを取得します。')
-                        userSearch_sql = '''select * from TwitterExistsUser where realname='{0}' '''.format (word2)
+                        userSearch_sql = '''select * from LINEExistsUser where realname='{0}' '''.format (word2)
                         if (not self.cursor.execute (userSearch_sql)):
                             raise ValueError ('kasu')
                         reacher = False
@@ -218,14 +220,14 @@ class DataBases (object):
                 comparison = '>'
             if (type (word2) is str):
                 raise ValueError ('SQLインジェクション的な操作は禁止されています。\n引数を確認して下さい。')
-            call_sql = f'''select * from TwitterExistsUser where money{comparison}{word2}'''
+            call_sql = f'''select * from LINEExistsUser where money{comparison}{word2}'''
             print (call_sql)
             for i in self.cursor.execute (call_sql):
                 returnList.append (i)
             return returnList
         if (word1 == 'get'):
             if (word2 == 'root'):
-                select_sql = '''select * from TwitterExistsUser where authority=='su' '''
+                select_sql = '''select * from LINEExistsUser where authority=='su' '''
                 print (select_sql)
                 for i in self.cursor.execute (select_sql):
                     returnList.append (i)
