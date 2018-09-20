@@ -36,7 +36,7 @@ from linebot.models import (
 )
 import Database
 import traceback
-
+import Notifer as notif
 app = Flask(__name__)
 
 # get channel_secret and channel_access_token from your environment variabl
@@ -44,9 +44,8 @@ try:
     db=Database.DataBases()
     print(db.Search('at','all'))
 except:
-    traceback.print_exc()
-
-exit(0)
+    notif.output(traceback.format_exc())
+    exit(0)
 channel_secret = os.getenv('LINE_CHANNEL_SECRET', None)
 channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', None)
 
@@ -93,8 +92,43 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
+
     text = event.message.text
 
+    if isinstance(event.source,SourceUser):  # ユーザが登録済みか確認　登録済みなら本名を入手しておく
+        try:
+            userdata=db.Search('at',event.source.user_id) #リストを取得　内容はDatabase.pyを確認
+            isRegistered=True
+        except KeyError:
+            isRegistered=False
+
+
+    if text == 'menu' and isRegistered:  # 登録済みか確認したい
+        menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
+            title='KBISのメニュー', text=f'ようこそ{userdata[1]}さん', actions=[  # 多分userlist[1]で本名が取得できる。
+                MessageAction ( label='操作方法を確認。', text='help' ),
+                MessageAction ( label='滞納額を確認', text='check' ),
+                MessageAction ( label='KBISについて', text='know KBIS' ),
+                MessageAction ( label = '設定変更',text='change')
+            ] )
+        template_message = TemplateSendMessage (
+            alt_text='Menu alt text', template=menu_buttons )
+        line_bot_api.reply_message ( event.reply_token, template_message )
+    elif text == 'menu' and not isRegistered:
+        menu_buttons = ButtonsTemplate(
+            title='未登録者用メニュー',
+            text=f'初めましてKBISです！ \n 以下の登録ボタンを押した後、 「苗字 名前」（鉤括弧は不要）と送信してください！',
+            actions=[
+                MessageAction(label='登録',text='register')
+            ]
+        )
+        template_message = TemplateSendMessage(
+            alt_text='Newbie Menu alt Text',
+            template=menu_buttons
+        )
+        line_bot_api.reply_message(event.reply_token,template_message)
+
+    # nyaa
     if text == 'profile':
         if isinstance(event.source, SourceUser):
             profile = line_bot_api.get_profile(event.source.user_id)

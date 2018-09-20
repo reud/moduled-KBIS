@@ -232,7 +232,7 @@ class DataBases (object):
                 for i in self.cursor.execute (select_sql):
                     returnList.append (i)
                 return returnList
-        raise ValueError ('値見つからない')
+        raise KeyError ('値見つからない')
 
     def RegisterOrChanger( self, Rname: str, NewuserId: str, register=False ) -> str:
         if (not register):
