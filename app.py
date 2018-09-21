@@ -37,6 +37,7 @@ from linebot.models import (
 import Database
 import traceback
 import Notifer as notif
+import EnviromentVar as envi
 app = Flask(__name__)
 
 # get channel_secret and channel_access_token from your environment variabl
@@ -46,8 +47,8 @@ try:
 except:
     notif.output(traceback.format_exc())
     exit(0)
-channel_secret = os.getenv('LINE_CHANNEL_SECRET', None)
-channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', None)
+channel_secret = envi.LINE_CHANNEL_SECRET
+channel_access_token = envi.LINE_CHANNEL_ACCESS_TOKEN
 
 
 line_bot_api = LineBotApi(channel_access_token)

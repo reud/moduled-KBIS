@@ -142,6 +142,7 @@ class DataBases (object):
         workbook.save (self.moneyBook)
 
     def Search( self, word1: str, word2: str ) -> list:
+        self.cursor = self.connect.cursor ( )
         createLINEUserTable = '''create table if not exists LINEExistsUser(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
         self.cursor.execute (createLINEUserTable)
         uReturnist = [ ]
