@@ -17,7 +17,7 @@ class DataBases (object):
         notif.output ('DataBase 1/5 メモリ内のデータベースを確認しています。')
 
         try:
-            os.remove (":memory:")  # for memory leak interrupt
+            os.remove (envi.DATABASE_PLACE)  # for memory leak interrupt
         except:
             notif.output (traceback.format_exc ( ))
 
@@ -26,11 +26,12 @@ class DataBases (object):
         self.userBook = envi.USERLIST_DATA_DIRECTRY
         self.moneyBook = envi.MANAGEBOOK_PLACE
 
-        self.connect = sqlite3.connect (":memory:")
+        self.db = sqlite3.connect (envi.DATABASE_PLACE)
+        self.cursor=self.db.cursor()
 
         notif.output ('DataBase 3/5 データベースに接続しました。テーブルの作成、ユーザの追加を行います。')
 
-        self.cursor = self.connect.cursor ( )
+
         # Table Make
         create_table = '''create table users(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
         self.sql = 'insert into users (gen,realname,userId,money,remarks,authority) values (?,?,?,?,?,?)'
@@ -45,10 +46,15 @@ class DataBases (object):
                 notif.output (traceback.format_exc ( ))
 
         notif.output ('DataBase 5/5 読み込みが完了しました。')
+        print ('ユーザ全体のリストを表示します。')
 
+        for i in self.cursor.execute ('''select * from users'''):
+            print (i)
+        self.db.commit()
+        self.cursor.close()
+        linelist = self.Search ('at', 'all')
     def CreateUsersFromSheet( self, gen ):  # SQLに追加できるように手に入れたデータを変換する
         userList = [ ]
-
         moneybook = openpyxl.load_workbook (self.moneyBook)
         sheet = moneybook[ f'{gen}G' ]
 
@@ -102,8 +108,9 @@ class DataBases (object):
         userbook.save (self.userBook)
         print(userList)
         return userList
-
     def renew( self ):  # 一回全部消すか・・・
+        self.db = sqlite3.connect (envi.DATABASE_PLACE)
+        self.cursor=self.db.cursor()
         delete_usersql = '''drop table users'''
         delete_linesql = '''drop table LINEExistsUser'''
         try:
@@ -129,27 +136,25 @@ class DataBases (object):
 
         for i in self.cursor.execute ('''select * from users'''):
             print (i)
-        linelist = self.Search ('at', 'all')
 
-        print ('LINEユーザのテーブルを更新しています・・・')
-        for i in linelist:
-            print (i)
-        print ('LINEユーザのテーブルの更新が完了しました。')
 
         select_sql = 'select * from users'
         for row in self.cursor.execute (select_sql):
             print (row)
         workbook.save (self.moneyBook)
+        self.db.commit()
 
+        self.cursor.close ( )
     def Search( self, word1: str, word2: str ) -> list:
-        self.cursor = self.connect.cursor ( )
+        self.db = sqlite3.connect (envi.DATABASE_PLACE)
+        self.cursor=self.db.cursor()
         createLINEUserTable = '''create table if not exists LINEExistsUser(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
         self.cursor.execute (createLINEUserTable)
         uReturnist = [ ]
         select_sql = '''select * from users where userId is not null'''
         for row in self.cursor.execute (select_sql):
             uReturnist.append (row)
-            # print(row)
+            print(row)
         select_sql = '''insert or ignore into LINEExistsUser(gen,realname,userId,money,remarks,authority) values (?,?,?,?,?,?)'''
         self.cursor.executemany (select_sql, uReturnist)
         select_sql = '''select * from LINEExistsUser'''
@@ -167,6 +172,7 @@ class DataBases (object):
             if (word2 == 'all'):
                 at_all_sql = '''select * from LINEExistsUser'''
                 for data in self.cursor.execute (at_all_sql):
+                    print(data)
                     returnList.append (data)
                 return returnList
             else:  # 本名 or lineID
@@ -233,9 +239,12 @@ class DataBases (object):
                 for i in self.cursor.execute (select_sql):
                     returnList.append (i)
                 return returnList
+
         raise KeyError ('値見つからない')
 
     def RegisterOrChanger( self, Rname: str, NewuserId: str, register=False ) -> str:
+        self.db = sqlite3.connect (envi.DATABASE_PLACE)
+        self.cursor=self.db.cursor()
         if (not register):
             try:
                 listy = self.Search ('at', Rname)
@@ -269,4 +278,7 @@ class DataBases (object):
             else:
                 break
         wb.save (self.userBook)
+        self.db.commit()
+
+        self.cursor.close ( )
         return 'あなたが誰か判別することが出来ませんでした。管理者に確認することをお勧め致します。'

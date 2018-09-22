@@ -44,6 +44,10 @@ app = Flask(__name__)
 try:
     db=Database.DataBases()
     print(db.Search('at','all'))
+    print(db.renew())
+    print(db.RegisterOrChanger('nyaa','wow'))
+    print(db.Search('at','all'))
+
 except:
     notif.output(traceback.format_exc())
     exit(0)
