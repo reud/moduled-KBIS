@@ -60,7 +60,7 @@ handler = WebhookHandler(channel_secret)
 
 static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 
-
+is_register_mode=False
 # function for create tmp dir for download content
 def make_static_tmp_dir():
     try:
@@ -107,8 +107,25 @@ def handle_text_message(event):
         except KeyError:
             isRegistered=False
 
-
-    if text == 'menu' and isRegistered:  # 登録済みか確認したい
+    if is_register_mode:
+        try:
+            res=db.RegisterOrChanger(event.message.text,event.source.user_id)
+            line_bot_api.reply_message(
+                event.reply_token, [
+                    TextSendMessage(text=f'{res[0]}の{res[1]}　さん'),
+                    TextSendMessage(text='登録が完了しました。'),
+                    TextSendMessage(text='再度menuと打ってメニューを閲覧してください。')
+                ]
+            )
+        except KeyError:
+            line_bot_api.reply_message(
+                event.reply_token, [
+                    TextSendMessage(text='「データベースにあなたの名前は見つかりませんでした'),
+                    TextSendMessage(text='形式が正しいか確認してください。'),
+                    TextSendMessage(text='どうしてもだめな場合管理者に確認してください。')
+                ]
+            )
+    elif text == 'menu' and isRegistered:  # 登録済みか確認したい
         menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
             title='KBISのメニュー', text=f'ようこそ{userdata[1]}さん', actions=[  # 多分userlist[1]で本名が取得できる。
                 MessageAction ( label='操作方法を確認。', text='help' ),
@@ -121,8 +138,8 @@ def handle_text_message(event):
         line_bot_api.reply_message ( event.reply_token, template_message )
     elif text == 'menu' and not isRegistered:
         menu_buttons = ButtonsTemplate(
-            title='未登録者用メニュー',
-            text=f'初めましてKBISです！ \n 以下の登録ボタンを押した後、 「苗字 名前」（鉤括弧は不要）と送信してください！',
+            title='同意確認',
+            text=f'登録ボタンを押し、\r\n指示に従って進めてください',
             actions=[
                 MessageAction(label='登録',text='register')
             ]
@@ -132,7 +149,16 @@ def handle_text_message(event):
             template=menu_buttons
         )
         line_bot_api.reply_message(event.reply_token,template_message)
+    elif text=='register' and not isRegistered:
+        is_register_mode=True
+        line_bot_api.reply_message(
+            event.reply_token, [
+                TextSendMessage(text='「名字 名前」の形で名前を教えてください'),
+                TextSendMessage(text='名字と名前の間には半角スペースを入れてください\r\n例:'),
+                TextSendMessage(text='佐藤 太郎')
 
+            ]
+        )
     # nyaa
     if text == 'profile':
         if isinstance(event.source, SourceUser):
