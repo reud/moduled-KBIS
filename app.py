@@ -116,7 +116,6 @@ def handle_text_message(event):
             title='KBISのメニュー', text=f'ようこそ{userdata[0][1]}さん', actions=[  # リストにタプルなので注意
                 MessageAction ( label='滞納額を確認', text='check' ),
                 MessageAction ( label='KBISについて', text='know KBIS' ),
-                MessageAction ( label = '設定変更',text='change')
             ] )
         template_message = TemplateSendMessage (
             alt_text='Menu alt text', template=menu_buttons )
@@ -161,6 +160,7 @@ def handle_text_message(event):
             )
             db.renew()
             isRegistered=True
+            is_register_mode=False
         except KeyError:
             line_bot_api.reply_message(
                 event.reply_token, [
@@ -188,7 +188,8 @@ def handle_text_message(event):
         template_message = TemplateSendMessage (
             alt_text='Menu alt text', template=menu_buttons )
         line_bot_api.reply_message ( event.reply_token, template_message )
-
+    else:
+        pass
 
 
 
