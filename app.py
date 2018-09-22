@@ -47,6 +47,8 @@ try:
     print(db.renew())
     print(db.RegisterOrChanger('nyaa','wow'))
     print(db.Search('at','all'))
+    print(db.RegisterOrChanger('tintin','manoftheman',True))
+    print(db.Search('at', 'all'))
 except:
     notif.output(traceback.format_exc())
     exit(0)
@@ -95,9 +97,10 @@ def callback():
     return 'OK'
 
 
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
-
+    global is_register_mode
     text = event.message.text
 
     if isinstance(event.source,SourceUser):  # ユーザが登録済みか確認　登録済みなら本名を入手しておく
@@ -106,11 +109,11 @@ def handle_text_message(event):
             isRegistered=True
         except KeyError:
             isRegistered=False
-
+    print(is_register_mode)
     if text == 'menu' and isRegistered:  # 登録済みか確認したい
+        print(userdata)
         menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
-            title='KBISのメニュー', text=f'ようこそ{userdata[1]}さん', actions=[  # 多分userlist[1]で本名が取得できる。
-                MessageAction ( label='操作方法を確認。', text='help' ),
+            title='KBISのメニュー', text=f'ようこそ{userdata[0][1]}さん', actions=[  # リストにタプルなので注意
                 MessageAction ( label='滞納額を確認', text='check' ),
                 MessageAction ( label='KBISについて', text='know KBIS' ),
                 MessageAction ( label = '設定変更',text='change')
@@ -141,27 +144,61 @@ def handle_text_message(event):
 
             ]
         )
-    else:
+    elif is_register_mode:  # ここクソコード
         try:
-            res = db.RegisterOrChanger(event.message.text, event.source.user_id)
+            res = db.RegisterOrChanger(event.message.text, event.source.user_id,True)
+            if(res=='登録完了しました！'):
+                pass
+            else:
+                raise KeyError()
+            print(res)
             line_bot_api.reply_message(
                 event.reply_token, [
-                    TextSendMessage(text=f'{res[0]}の{res[1]}　さん'),
+                    TextSendMessage(text=f'ようこそ　{event.message.text}　さん'),
                     TextSendMessage(text='登録が完了しました。'),
                     TextSendMessage(text='再度menuと打ってメニューを閲覧してください。')
                 ]
             )
+            db.renew()
             isRegistered=True
-
         except KeyError:
             line_bot_api.reply_message(
                 event.reply_token, [
-                    TextSendMessage(text='「データベースにあなたの名前は見つかりませんでした'),
+                    TextSendMessage(text='Got exception from LINE Messaging API: Invalid reply tokenデータベースにあなたの名前は見つかりませんでした'),
                     TextSendMessage(text='形式が正しいか確認してください。'),
                     TextSendMessage(text='どうしてもだめな場合管理者に確認してください。')
                 ]
             )
         # nyaa
+    elif text == 'check' and isRegistered:
+        userdata = db.Search('at', event.source.user_id)
+        menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
+            title='KBIS　滞納額確認', text=f'あなたの滞納額は{userdata[0][3]}円です', actions=[  # リストにタプルなので注意
+                MessageAction ( label='メニューに戻る', text='menu' ),
+            ] )
+        template_message = TemplateSendMessage (
+            alt_text='Menu alt text', template=menu_buttons )
+        line_bot_api.reply_message ( event.reply_token, template_message )
+    elif text == 'know KBIS' and isRegistered:
+        userdata = db.Search('at', event.source.user_id)
+        menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
+            title='KBISについて', text='Twitter @reudest \r\n Source:\r\nGithub reud/moduled-KBIS', actions=[  # リストにタプルなので注意
+                MessageAction ( label='メニューに戻る', text='menu' ),
+            ] )
+        template_message = TemplateSendMessage (
+            alt_text='Menu alt text', template=menu_buttons )
+        line_bot_api.reply_message ( event.reply_token, template_message )
+
+
+
+
+
+
+
+
+
+
+
     if text == 'profile':
         if isinstance(event.source, SourceUser):
             profile = line_bot_api.get_profile(event.source.user_id)
