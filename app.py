@@ -47,10 +47,10 @@ try:
     print(db.renew())
     print(db.RegisterOrChanger('nyaa','wow'))
     print(db.Search('at','all'))
-
 except:
     notif.output(traceback.format_exc())
     exit(0)
+
 channel_secret = envi.LINE_CHANNEL_SECRET
 channel_access_token = envi.LINE_CHANNEL_ACCESS_TOKEN
 
@@ -107,27 +107,7 @@ def handle_text_message(event):
         except KeyError:
             isRegistered=False
 
-    if is_register_mode:
-        try:
-            res=db.RegisterOrChanger(event.message.text,event.source.user_id)
-            line_bot_api.reply_message(
-                event.reply_token, [
-                    TextSendMessage(text=f'{res[0]}の{res[1]}　さん'),
-                    TextSendMessage(text='登録が完了しました。'),
-                    TextSendMessage(text='再度menuと打ってメニューを閲覧してください。')
-                ]
-            )
-            is_register_mode=False
-            
-        except KeyError:
-            line_bot_api.reply_message(
-                event.reply_token, [
-                    TextSendMessage(text='「データベースにあなたの名前は見つかりませんでした'),
-                    TextSendMessage(text='形式が正しいか確認してください。'),
-                    TextSendMessage(text='どうしてもだめな場合管理者に確認してください。')
-                ]
-            )
-    elif text == 'menu' and isRegistered:  # 登録済みか確認したい
+    if text == 'menu' and isRegistered:  # 登録済みか確認したい
         menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
             title='KBISのメニュー', text=f'ようこそ{userdata[1]}さん', actions=[  # 多分userlist[1]で本名が取得できる。
                 MessageAction ( label='操作方法を確認。', text='help' ),
@@ -161,7 +141,27 @@ def handle_text_message(event):
 
             ]
         )
-    # nyaa
+    else:
+        try:
+            res = db.RegisterOrChanger(event.message.text, event.source.user_id)
+            line_bot_api.reply_message(
+                event.reply_token, [
+                    TextSendMessage(text=f'{res[0]}の{res[1]}　さん'),
+                    TextSendMessage(text='登録が完了しました。'),
+                    TextSendMessage(text='再度menuと打ってメニューを閲覧してください。')
+                ]
+            )
+            isRegistered=True
+
+        except KeyError:
+            line_bot_api.reply_message(
+                event.reply_token, [
+                    TextSendMessage(text='「データベースにあなたの名前は見つかりませんでした'),
+                    TextSendMessage(text='形式が正しいか確認してください。'),
+                    TextSendMessage(text='どうしてもだめな場合管理者に確認してください。')
+                ]
+            )
+        # nyaa
     if text == 'profile':
         if isinstance(event.source, SourceUser):
             profile = line_bot_api.get_profile(event.source.user_id)
