@@ -117,6 +117,8 @@ def handle_text_message(event):
                     TextSendMessage(text='再度menuと打ってメニューを閲覧してください。')
                 ]
             )
+            is_register_mode=False
+            
         except KeyError:
             line_bot_api.reply_message(
                 event.reply_token, [
