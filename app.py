@@ -38,9 +38,17 @@ import Database
 import traceback
 import Notifer as notif
 import EnviromentVar as envi
+import budgetCalc as budget
+
 app = Flask(__name__)
 
 # get channel_secret and channel_access_token from your environment variabl
+
+a=budget.Budget()
+print(a.output())
+
+
+exit(0)
 try:
     db=Database.DataBases()
     print(db.Search('at','all'))
@@ -115,7 +123,7 @@ def handle_text_message(event):
         menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
             title='KBISのメニュー', text=f'ようこそ{userdata[0][1]}さん', actions=[  # リストにタプルなので注意
                 MessageAction ( label='滞納額を確認', text='check' ),
-                MessageAction ( label='KBISについて', text='know KBIS' ),
+                MessageAction ( label='KBISについて', text='about' ),
             ] )
         template_message = TemplateSendMessage (
             alt_text='Menu alt text', template=menu_buttons )
@@ -179,7 +187,7 @@ def handle_text_message(event):
         template_message = TemplateSendMessage (
             alt_text='Menu alt text', template=menu_buttons )
         line_bot_api.reply_message ( event.reply_token, template_message )
-    elif text == 'know KBIS' and isRegistered:
+    elif text == 'about' and isRegistered:
         userdata = db.Search('at', event.source.user_id)
         menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
             title='KBISについて', text='Twitter @reudest \r\n Source:\r\nGithub reud/moduled-KBIS', actions=[  # リストにタプルなので注意
