@@ -47,6 +47,7 @@ app = Flask(__name__)
 bud = budget.Budget()
 
 try:
+    print(bud.budget_reserve_fund)
     db = Database.DataBases()
     print(db.Search('at', 'all'))
     print(db.renew())
@@ -190,21 +191,19 @@ def handle_text_message(event):
         line_bot_api.reply_message(
             event.reply_token, [
                 TextSendMessage(
-                    text=f'''～チームごとの残予算額～
-                    設計班: {bud.budget_team_design_engineering:,}
-                    翼班: {bud.budget_team_wing:,}
-                    コックピット班: {bud.budget_team_cockpit:,}
-                    接合班: {bud.budget_team_joint:,}
-                    電装班: {bud.budget_team_electrical:,}
-                    デザイン班: {bud.budget_team_design:,}
-                    予備費: {bud.budget_reserve_fund:,}
-                    
-                    
-                    現在の残高: {bud.receipts_and_expenditure:,}
-                    
-
-
-                    '''),
+                    text=f'''～チームごとの残予算額～\n
+設計班: {bud.budget_team_design_engineering:,}
+翼班: {bud.budget_team_wing:,}
+コックピット班: {bud.budget_team_cockpit:,}
+接合班: {bud.budget_team_joint:,}
+電装班: {bud.budget_team_electrical:,}
+デザイン班: {bud.budget_team_design:,}
+予備費: {bud.budget_reserve_fund:,}
+\n
+\n
+現在の残高: {bud.receipts_and_expenditure:,}
+ \n
+                '''),
                 TextSendMessage(text='menuと送信してメニュー画面に戻ります。')
             ]
         )
