@@ -190,16 +190,16 @@ def handle_text_message(event):
             event.reply_token, [
                 TextSendMessage(
                     text=f'''～チームごとの残予算額～
-                    設計班: { ':,'.format(bud.budget_team_design_engineering) }
-                    翼班: { ':,'.format(bud.budget_team_wing) }
-                    コックピット班: { ':,'.format(bud.budget_team_cockpit) }
-                    接合班: { ':,'.format(bud.budget_team_joint) }
-                    電装班: { ':,'.format(bud.budget_team_electrical) }
-                    デザイン班: { ':,'.format(bud.budget_team_design) }
-                    予備費: { ':,'.format(bud.budget_reserve_fund) }
+                    設計班: {'{:,}'.format(bud.budget_team_design_engineering) }
+                    翼班: {'{:,}'.format(bud.budget_team_wing) }
+                    コックピット班: {'{:,}'.format(bud.budget_team_cockpit) }
+                    接合班: {'{:,}'.format(bud.budget_team_joint) }
+                    電装班: {'{:,}'.format(bud.budget_team_electrical) }
+                    デザイン班: {'{:,}'.format(bud.budget_team_design) }
+                    予備費: {'{:,}'.format(bud.budget_reserve_fund) }
                     
                     
-                    現在の残高: { ':,'.format(bud.receipts_and_expenditure) }
+                    現在の残高: {'{:,}'.format(bud.receipts_and_expenditure) }
                     
 
 
