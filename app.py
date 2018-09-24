@@ -38,17 +38,14 @@ import Database
 import traceback
 import Notifer as notif
 import EnviromentVar as envi
-import budgetCalc as budget
+import budgetHandler as budget
 
 app = Flask(__name__)
 
 # get channel_secret and channel_access_token from your environment variabl
 
-a=budget.Budget()
-print(a.output())
+bud=budget.Budget()
 
-
-exit(0)
 try:
     db=Database.DataBases()
     print(db.Search('at','all'))
@@ -122,7 +119,8 @@ def handle_text_message(event):
         print(userdata)
         menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
             title='KBISのメニュー', text=f'ようこそ{userdata[0][1]}さん', actions=[  # リストにタプルなので注意
-                MessageAction ( label='滞納額を確認', text='check' ),
+                MessageAction ( label='滞納額照会', text='check' ),
+                MessageAction(label='予算状況照会', text='team=check'),
                 MessageAction ( label='KBISについて', text='about' ),
             ] )
         template_message = TemplateSendMessage (
@@ -187,6 +185,28 @@ def handle_text_message(event):
         template_message = TemplateSendMessage (
             alt_text='Menu alt text', template=menu_buttons )
         line_bot_api.reply_message ( event.reply_token, template_message )
+    elif text == 'team_check' and isRegistered:
+        line_bot_api.reply_message(
+            event.reply_token, [
+                TextSendMessage(
+                    text=f'''～チームごとの残予算額～
+                    設計班: { ':,'.format(bud.budget_team_design_engineering) }
+                    翼班: { ':,'.format(bud.budget_team_wing) }
+                    コックピット班: { ':,'.format(bud.budget_team_cockpit) }
+                    接合班: { ':,'.format(bud.budget_team_joint) }
+                    電装班: { ':,'.format(bud.budget_team_electrical) }
+                    デザイン班: { ':,'.format(bud.budget_team_design) }
+                    予備費: { ':,'.format(bud.budget_reserve_fund) }
+                    
+                    
+                    現在の残高: { ':,'.format(bud.receipts_and_expenditure) }
+                    
+
+
+                    '''),
+                TextSendMessage(text='menuと送信してメニュー画面に戻ります。')
+            ]
+        )
     elif text == 'about' and isRegistered:
         userdata = db.Search('at', event.source.user_id)
         menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
