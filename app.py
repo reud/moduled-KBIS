@@ -179,7 +179,7 @@ def handle_text_message(event):
     elif text == 'check' and isRegistered:
         userdata = db.Search('at', event.source.user_id)
         menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
-            title='KBIS　滞納額確認', text=f'あなたの滞納額は{userdata[0][3]}円です', actions=[  # リストにタプルなので注意
+            title='KBIS　滞納額確認', text=f'あなたの滞納額は{ '{:,}'.format(userdata[0][3]) }円です', actions=[  # リストにタプルなので注意
                 MessageAction ( label='メニューに戻る', text='menu' ),
             ] )
         template_message = TemplateSendMessage (
