@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#This software includes the work that is distributed in the Apache License 2.0
+# This software includes the work that is distributed in the Apache License 2.0
 
 from __future__ import unicode_literals
 
@@ -44,15 +44,15 @@ app = Flask(__name__)
 
 # get channel_secret and channel_access_token from your environment variabl
 
-bud=budget.Budget()
+bud = budget.Budget()
 
 try:
-    db=Database.DataBases()
-    print(db.Search('at','all'))
+    db = Database.DataBases()
+    print(db.Search('at', 'all'))
     print(db.renew())
-    print(db.RegisterOrChanger('nyaa','wow'))
-    print(db.Search('at','all'))
-    print(db.RegisterOrChanger('tintin','manoftheman',True))
+    print(db.RegisterOrChanger('nyaa', 'wow'))
+    print(db.Search('at', 'all'))
+    print(db.RegisterOrChanger('tintin', 'manoftheman', True))
     print(db.Search('at', 'all'))
 except:
     notif.output(traceback.format_exc())
@@ -61,13 +61,14 @@ except:
 channel_secret = envi.LINE_CHANNEL_SECRET
 channel_access_token = envi.LINE_CHANNEL_ACCESS_TOKEN
 
-
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 
-is_register_mode=False
+is_register_mode = False
+
+
 # function for create tmp dir for download content
 def make_static_tmp_dir():
     try:
@@ -102,45 +103,44 @@ def callback():
     return 'OK'
 
 
-
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
     global is_register_mode
     text = event.message.text
 
-    if isinstance(event.source,SourceUser):  # ユーザが登録済みか確認　登録済みなら本名を入手しておく
+    if isinstance(event.source, SourceUser):  # ユーザが登録済みか確認　登録済みなら本名を入手しておく
         try:
-            userdata=db.Search('at',event.source.user_id) #リストを取得　内容はDatabase.pyを確認
-            isRegistered=True
+            userdata = db.Search('at', event.source.user_id)  # リストを取得　内容はDatabase.pyを確認
+            isRegistered = True
         except KeyError:
-            isRegistered=False
+            isRegistered = False
     print(is_register_mode)
     if text == 'menu' and isRegistered:  # 登録済みか確認したい
         print(userdata)
-        menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
+        menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
             title='KBISのメニュー', text=f'ようこそ{userdata[0][1]}さん', actions=[  # リストにタプルなので注意
-                MessageAction ( label='滞納額照会', text='check' ),
-                MessageAction(label='予算状況照会', text='team=check'),
-                MessageAction ( label='KBISについて', text='about' ),
-            ] )
-        template_message = TemplateSendMessage (
-            alt_text='Menu alt text', template=menu_buttons )
-        line_bot_api.reply_message ( event.reply_token, template_message )
+                MessageAction(label='滞納額照会', text='check'),
+                MessageAction(label='予算状況照会', text='team_check'),
+                MessageAction(label='KBISについて', text='about'),
+            ])
+        template_message = TemplateSendMessage(
+            alt_text='Menu alt text', template=menu_buttons)
+        line_bot_api.reply_message(event.reply_token, template_message)
     elif text == 'menu' and not isRegistered:
         menu_buttons = ButtonsTemplate(
             title='同意確認',
             text=f'登録ボタンを押し、\r\n指示に従って進めてください',
             actions=[
-                MessageAction(label='登録',text='register')
+                MessageAction(label='登録', text='register')
             ]
         )
         template_message = TemplateSendMessage(
             alt_text='Newbie Menu alt Text',
             template=menu_buttons
         )
-        line_bot_api.reply_message(event.reply_token,template_message)
-    elif text=='register' and not isRegistered:
-        is_register_mode=True
+        line_bot_api.reply_message(event.reply_token, template_message)
+    elif text == 'register' and not isRegistered:
+        is_register_mode = True
         line_bot_api.reply_message(
             event.reply_token, [
                 TextSendMessage(text='「名字 名前」の形で名前を教えてください'),
@@ -151,8 +151,8 @@ def handle_text_message(event):
         )
     elif is_register_mode:  # ここクソコード
         try:
-            res = db.RegisterOrChanger(event.message.text, event.source.user_id,True)
-            if(res=='登録完了しました！'):
+            res = db.RegisterOrChanger(event.message.text, event.source.user_id, True)
+            if (res == '登録完了しました！'):
                 pass
             else:
                 raise KeyError()
@@ -165,12 +165,13 @@ def handle_text_message(event):
                 ]
             )
             db.renew()
-            isRegistered=True
-            is_register_mode=False
+            isRegistered = True
+            is_register_mode = False
         except KeyError:
             line_bot_api.reply_message(
                 event.reply_token, [
-                    TextSendMessage(text='Got exception from LINE Messaging API: Invalid reply tokenデータベースにあなたの名前は見つかりませんでした'),
+                    TextSendMessage(
+                        text='Got exception from LINE Messaging API: Invalid reply tokenデータベースにあなたの名前は見つかりませんでした'),
                     TextSendMessage(text='形式が正しいか確認してください。'),
                     TextSendMessage(text='どうしてもだめな場合管理者に確認してください。')
                 ]
@@ -178,28 +179,28 @@ def handle_text_message(event):
         # nyaa
     elif text == 'check' and isRegistered:
         userdata = db.Search('at', event.source.user_id)
-        menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
+        menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
             title='KBIS　滞納額確認', text=f'あなたの滞納額は{userdata[0][3]:,}円です', actions=[  # リストにタプルなので注意
-                MessageAction ( label='メニューに戻る', text='menu' ),
-            ] )
-        template_message = TemplateSendMessage (
-            alt_text='Menu alt text', template=menu_buttons )
-        line_bot_api.reply_message ( event.reply_token, template_message )
+                MessageAction(label='メニューに戻る', text='menu'),
+            ])
+        template_message = TemplateSendMessage(
+            alt_text='Menu alt text', template=menu_buttons)
+        line_bot_api.reply_message(event.reply_token, template_message)
     elif text == 'team_check' and isRegistered:
         line_bot_api.reply_message(
             event.reply_token, [
                 TextSendMessage(
                     text=f'''～チームごとの残予算額～
-                    設計班: {'{:,}'.format(bud.budget_team_design_engineering) }
-                    翼班: {'{:,}'.format(bud.budget_team_wing) }
-                    コックピット班: {'{:,}'.format(bud.budget_team_cockpit) }
-                    接合班: {'{:,}'.format(bud.budget_team_joint) }
-                    電装班: {'{:,}'.format(bud.budget_team_electrical) }
-                    デザイン班: {'{:,}'.format(bud.budget_team_design) }
-                    予備費: {'{:,}'.format(bud.budget_reserve_fund) }
+                    設計班: {bud.budget_team_design_engineering:,}
+                    翼班: {bud.budget_team_wing:,}
+                    コックピット班: {bud.budget_team_cockpit:,}
+                    接合班: {bud.budget_team_joint:,}
+                    電装班: {bud.budget_team_electrical:,}
+                    デザイン班: {bud.budget_team_design:,}
+                    予備費: {bud.budget_reserve_fund:,}
                     
                     
-                    現在の残高: {'{:,}'.format(bud.receipts_and_expenditure) }
+                    現在の残高: {bud.receipts_and_expenditure:,}
                     
 
 
@@ -209,24 +210,16 @@ def handle_text_message(event):
         )
     elif text == 'about' and isRegistered:
         userdata = db.Search('at', event.source.user_id)
-        menu_buttons = ButtonsTemplate (  # 一応登録済みの時のメニュー　アクションの最大数は4
-            title='KBISについて', text='Twitter @reudest \r\n Source:\r\nGithub reud/moduled-KBIS', actions=[  # リストにタプルなので注意
-                MessageAction ( label='メニューに戻る', text='menu' ),
-            ] )
-        template_message = TemplateSendMessage (
-            alt_text='Menu alt text', template=menu_buttons )
-        line_bot_api.reply_message ( event.reply_token, template_message )
+        menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
+            title='KBISについて', text='Twitter @reudest \r\n Source:\r\nGithub reud/moduled-KBIS',
+            actions=[  # リストにタプルなので注意
+                MessageAction(label='メニューに戻る', text='menu'),
+            ])
+        template_message = TemplateSendMessage(
+            alt_text='Menu alt text', template=menu_buttons)
+        line_bot_api.reply_message(event.reply_token, template_message)
     else:
         pass
-
-
-
-
-
-
-
-
-
 
     if text == 'profile':
         if isinstance(event.source, SourceUser):
