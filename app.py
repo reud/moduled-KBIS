@@ -51,10 +51,6 @@ try:
     db = Database.DataBases()
     print(db.Search('at', 'all'))
     print(db.renew())
-    print(db.RegisterOrChanger('nyaa', 'wow'))
-    print(db.Search('at', 'all'))
-    print(db.RegisterOrChanger('tintin', 'manoftheman', True))
-    print(db.Search('at', 'all'))
 except:
     notif.output(traceback.format_exc())
     exit(0)
@@ -115,13 +111,19 @@ def handle_text_message(event):
             isRegistered = True
         except KeyError:
             isRegistered = False
+
+
     print(is_register_mode)
+
+
+
     if text == 'menu' and isRegistered:  # 登録済みか確認したい
         print(userdata)
         menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
             title='KBISのメニュー', text=f'ようこそ{userdata[0][1]}さん', actions=[  # リストにタプルなので注意
                 MessageAction(label='滞納額照会', text='check'),
-                MessageAction(label='予算状況照会', text='team_check'),
+                MessageAction(label='判別予算状況照会', text='team_check'),
+                MessageAction(label='全体の残高照会',text='budget'),
                 MessageAction(label='KBISについて', text='about'),
             ])
         template_message = TemplateSendMessage(
@@ -139,6 +141,15 @@ def handle_text_message(event):
             alt_text='Newbie Menu alt Text',
             template=menu_buttons
         )
+        line_bot_api.reply_message(event.reply_token, template_message)
+    elif text=='budget' and isRegistered:
+        bud.renew()
+        menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
+            title='全体の残高照会', text=f'全体の関係残高は{bud.receipts_and_expenditure:,}円です。', actions=[  # リストにタプルなので注意
+                MessageAction(label='メニューに戻る', text='menu'),
+            ])
+        template_message = TemplateSendMessage(
+            alt_text=f'全体の関係残高は{bud.receipts_and_expenditure:,}円です。', template=menu_buttons)
         line_bot_api.reply_message(event.reply_token, template_message)
     elif text == 'register' and not isRegistered:
         is_register_mode = True
@@ -172,8 +183,8 @@ def handle_text_message(event):
             line_bot_api.reply_message(
                 event.reply_token, [
                     TextSendMessage(
-                        text='Got exception from LINE Messaging API: Invalid reply tokenデータベースにあなたの名前は見つかりませんでした'),
-                    TextSendMessage(text='形式が正しいか確認してください。'),
+                        text='データベースにあなたの名前は見つかりませんでした'),
+                    TextSendMessage(text='形式が正しいか確認し、再送信してください'),
                     TextSendMessage(text='どうしてもだめな場合管理者に確認してください。')
                 ]
             )
@@ -185,9 +196,10 @@ def handle_text_message(event):
                 MessageAction(label='メニューに戻る', text='menu'),
             ])
         template_message = TemplateSendMessage(
-            alt_text='Menu alt text', template=menu_buttons)
+            alt_text=f'あなたの滞納額は{userdata[0][3]:,}円です', template=menu_buttons)
         line_bot_api.reply_message(event.reply_token, template_message)
     elif text == 'team_check' and isRegistered:
+        bud.renew()
         line_bot_api.reply_message(
             event.reply_token, [
                 TextSendMessage(
@@ -199,10 +211,6 @@ def handle_text_message(event):
 電装班: {bud.budget_team_electrical:,}
 デザイン班: {bud.budget_team_design:,}
 予備費: {bud.budget_reserve_fund:,}
-\n
-\n
-現在の残高: {bud.receipts_and_expenditure:,}
- \n
                 '''),
                 TextSendMessage(text='menuと送信してメニュー画面に戻ります。')
             ]
@@ -215,223 +223,10 @@ def handle_text_message(event):
                 MessageAction(label='メニューに戻る', text='menu'),
             ])
         template_message = TemplateSendMessage(
-            alt_text='Menu alt text', template=menu_buttons)
+            alt_text='about response', template=menu_buttons)
         line_bot_api.reply_message(event.reply_token, template_message)
     else:
         pass
-
-    if text == 'profile':
-        if isinstance(event.source, SourceUser):
-            profile = line_bot_api.get_profile(event.source.user_id)
-            line_bot_api.reply_message(
-                event.reply_token, [
-                    TextSendMessage(text='Display name: ' + profile.display_name),
-                    TextSendMessage(text='Status message: ' + profile.status_message)
-                ]
-            )
-        else:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="Bot can't use profile API without user ID"))
-    elif text == 'bye':
-        if isinstance(event.source, SourceGroup):
-            line_bot_api.reply_message(
-                event.reply_token, TextSendMessage(text='Leaving group'))
-            line_bot_api.leave_group(event.source.group_id)
-        elif isinstance(event.source, SourceRoom):
-            line_bot_api.reply_message(
-                event.reply_token, TextSendMessage(text='Leaving group'))
-            line_bot_api.leave_room(event.source.room_id)
-        else:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="Bot can't leave from 1:1 chat"))
-    elif text == 'confirm':
-        confirm_template = ConfirmTemplate(text='Do it?', actions=[
-            MessageAction(label='Yes', text='Yes!'),
-            MessageAction(label='No', text='No!'),
-        ])
-        template_message = TemplateSendMessage(
-            alt_text='Confirm alt text', template=confirm_template)
-        line_bot_api.reply_message(event.reply_token, template_message)
-    elif text == 'buttons':
-        buttons_template = ButtonsTemplate(
-            title='My buttons sample', text='Hello, my buttons', actions=[
-                URIAction(label='Go to line.me', uri='https://line.me'),
-                PostbackAction(label='ping', data='ping'),
-                PostbackAction(label='ping with text', data='ping', text='ping'),
-                MessageAction(label='Translate Rice', text='米')
-            ])
-        template_message = TemplateSendMessage(
-            alt_text='Buttons alt text', template=buttons_template)
-        line_bot_api.reply_message(event.reply_token, template_message)
-    elif text == 'carousel':
-        carousel_template = CarouselTemplate(columns=[
-            CarouselColumn(text='hoge1', title='fuga1', actions=[
-                URIAction(label='Go to line.me', uri='https://line.me'),
-                PostbackAction(label='ping', data='ping')
-            ]),
-            CarouselColumn(text='hoge2', title='fuga2', actions=[
-                PostbackAction(label='ping with text', data='ping', text='ping'),
-                MessageAction(label='Translate Rice', text='米')
-            ]),
-        ])
-        template_message = TemplateSendMessage(
-            alt_text='Carousel alt text', template=carousel_template)
-        line_bot_api.reply_message(event.reply_token, template_message)
-    elif text == 'image_carousel':
-        image_carousel_template = ImageCarouselTemplate(columns=[
-            ImageCarouselColumn(image_url='https://via.placeholder.com/1024x1024',
-                                action=DatetimePickerAction(label='datetime',
-                                                            data='datetime_postback',
-                                                            mode='datetime')),
-            ImageCarouselColumn(image_url='https://via.placeholder.com/1024x1024',
-                                action=DatetimePickerAction(label='date',
-                                                            data='date_postback',
-                                                            mode='date'))
-        ])
-        template_message = TemplateSendMessage(
-            alt_text='ImageCarousel alt text', template=image_carousel_template)
-        line_bot_api.reply_message(event.reply_token, template_message)
-    elif text == 'imagemap':
-        pass
-    elif text == 'flex':
-        bubble = BubbleContainer(
-            direction='ltr',
-            hero=ImageComponent(
-                url='https://example.com/cafe.jpg',
-                size='full',
-                aspect_ratio='20:13',
-                aspect_mode='cover',
-                action=URIAction(uri='http://example.com', label='label')
-            ),
-            body=BoxComponent(
-                layout='vertical',
-                contents=[
-                    # title
-                    TextComponent(text='Brown Cafe', weight='bold', size='xl'),
-                    # review
-                    BoxComponent(
-                        layout='baseline',
-                        margin='md',
-                        contents=[
-                            IconComponent(size='sm', url='https://example.com/gold_star.png'),
-                            IconComponent(size='sm', url='https://example.com/grey_star.png'),
-                            IconComponent(size='sm', url='https://example.com/gold_star.png'),
-                            IconComponent(size='sm', url='https://example.com/gold_star.png'),
-                            IconComponent(size='sm', url='https://example.com/grey_star.png'),
-                            TextComponent(text='4.0', size='sm', color='#999999', margin='md',
-                                          flex=0)
-                        ]
-                    ),
-                    # info
-                    BoxComponent(
-                        layout='vertical',
-                        margin='lg',
-                        spacing='sm',
-                        contents=[
-                            BoxComponent(
-                                layout='baseline',
-                                spacing='sm',
-                                contents=[
-                                    TextComponent(
-                                        text='Place',
-                                        color='#aaaaaa',
-                                        size='sm',
-                                        flex=1
-                                    ),
-                                    TextComponent(
-                                        text='Shinjuku, Tokyo',
-                                        wrap=True,
-                                        color='#666666',
-                                        size='sm',
-                                        flex=5
-                                    )
-                                ],
-                            ),
-                            BoxComponent(
-                                layout='baseline',
-                                spacing='sm',
-                                contents=[
-                                    TextComponent(
-                                        text='Time',
-                                        color='#aaaaaa',
-                                        size='sm',
-                                        flex=1
-                                    ),
-                                    TextComponent(
-                                        text="10:00 - 23:00",
-                                        wrap=True,
-                                        color='#666666',
-                                        size='sm',
-                                        flex=5,
-                                    ),
-                                ],
-                            ),
-                        ],
-                    )
-                ],
-            ),
-            footer=BoxComponent(
-                layout='vertical',
-                spacing='sm',
-                contents=[
-                    # callAction, separator, websiteAction
-                    SpacerComponent(size='sm'),
-                    # callAction
-                    ButtonComponent(
-                        style='link',
-                        height='sm',
-                        action=URIAction(label='CALL', uri='tel:000000'),
-                    ),
-                    # separator
-                    SeparatorComponent(),
-                    # websiteAction
-                    ButtonComponent(
-                        style='link',
-                        height='sm',
-                        action=URIAction(label='WEBSITE', uri="https://example.com")
-                    )
-                ]
-            ),
-        )
-        message = FlexSendMessage(alt_text="hello", contents=bubble)
-        line_bot_api.reply_message(
-            event.reply_token,
-            message
-        )
-    elif text == 'quick_reply':
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(
-                text='Quick reply',
-                quick_reply=QuickReply(
-                    items=[
-                        QuickReplyButton(
-                            action=PostbackAction(label="label1", data="data1")
-                        ),
-                        QuickReplyButton(
-                            action=MessageAction(label="label2", text="text2")
-                        ),
-                        QuickReplyButton(
-                            action=DatetimePickerAction(label="label3",
-                                                        data="data3",
-                                                        mode="date")
-                        ),
-                        QuickReplyButton(
-                            action=CameraAction(label="label4")
-                        ),
-                        QuickReplyButton(
-                            action=CameraRollAction(label="label5")
-                        ),
-                        QuickReplyButton(
-                            action=LocationAction(label="label6")
-                        ),
-                    ])))
-    else:
-        line_bot_api.reply_message(
-            event.reply_token, TextSendMessage(text=event.message.text))
-
 
 @handler.add(MessageEvent, message=LocationMessage)
 def handle_location_message(event):
@@ -476,11 +271,6 @@ def handle_content_message(event):
     dist_name = os.path.basename(dist_path)
     os.rename(tempfile_path, dist_path)
 
-    line_bot_api.reply_message(
-        event.reply_token, [
-            TextSendMessage(text='Save content.'),
-            TextSendMessage(text=request.host_url + os.path.join('static', 'tmp', dist_name))
-        ])
 
 
 @handler.add(MessageEvent, message=FileMessage)
@@ -495,47 +285,33 @@ def handle_file_message(event):
     dist_name = os.path.basename(dist_path)
     os.rename(tempfile_path, dist_path)
 
-    line_bot_api.reply_message(
-        event.reply_token, [
-            TextSendMessage(text='Save file.'),
-            TextSendMessage(text=request.host_url + os.path.join('static', 'tmp', dist_name))
-        ])
 
 
 @handler.add(FollowEvent)
 def handle_follow(event):
-    line_bot_api.reply_message(
-        event.reply_token, TextSendMessage(text='Got follow event'))
+    pass
 
 
 @handler.add(UnfollowEvent)
 def handle_unfollow():
-    app.logger.info("Got Unfollow event")
+    pass
 
 
 @handler.add(JoinEvent)
 def handle_join(event):
     line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text='Joined this ' + event.source.type))
+        TextSendMessage(text='続けるには「menu」と送信してください' + event.source.type))
 
 
 @handler.add(LeaveEvent)
 def handle_leave():
-    app.logger.info("Got leave event")
+    pass
 
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
-    if event.postback.data == 'ping':
-        line_bot_api.reply_message(
-            event.reply_token, TextSendMessage(text='pong'))
-    elif event.postback.data == 'datetime_postback':
-        line_bot_api.reply_message(
-            event.reply_token, TextSendMessage(text=event.postback.params['datetime']))
-    elif event.postback.data == 'date_postback':
-        line_bot_api.reply_message(
-            event.reply_token, TextSendMessage(text=event.postback.params['date']))
+    pass
 
 
 @handler.add(BeaconEvent)

@@ -22,7 +22,7 @@ class Budget:
                                                    column=envi.TEAM_BUDGET_START_COLUMN).value
         self.sheet = self.wb[envi.RECEIPTS_AND_EXPENDITURE_SHEETNAME]
         self.receipts_and_expenditure = self.sheet[envi.RECEIPTS_AND_EXPENDITURE_CELL].value
-
+        self.wb.close()
     def renew(self):
         self.wb = openpyxl.load_workbook(envi.MANAGEBOOK_PLACE, data_only=True)
         self.sheet = self.wb[envi.BUDGET_SHEETNAME]
@@ -42,3 +42,4 @@ class Budget:
                                                    column=envi.TEAM_BUDGET_START_COLUMN).value
         self.sheet = self.wb[envi.RECEIPTS_AND_EXPENDITURE_SHEETNAME]
         self.receipts_and_expenditure = self.sheet[envi.RECEIPTS_AND_EXPENDITURE_CELL].value
+        self.wb.close()
