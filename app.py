@@ -8,7 +8,6 @@ import errno
 import os
 import sys
 import tempfile
-import Notifer
 from argparse import ArgumentParser
 
 from flask import Flask, request, abort
@@ -104,7 +103,7 @@ def callback():
 def handle_text_message(event):
     global is_register_mode
     text = event.message.text
-
+    notif.output(f'メッセージが届きました。内容:\n{text}')
     if isinstance(event.source, SourceUser):  # ユーザが登録済みか確認　登録済みなら本名を入手しておく
         try:
             userdata = db.Search('at', event.source.user_id)  # リストを取得　内容はDatabase.pyを確認
@@ -120,7 +119,7 @@ def handle_text_message(event):
     if text == 'menu' and isRegistered:  # 登録済みか確認したい
         print(userdata)
         menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
-            title='KBISのメニュー', text=f'ようこそ{userdata[0][1]}さん', actions=[  # リストにタプルなので注意
+            title=f'ようこそ{userdata[0][1]}さん', text='\n入出金データは午前5時30分から6時間間隔で更新されます。\n最新でない可能性もあるのでご了承ください', actions=[  # リストにタプルなので注意
                 MessageAction(label='滞納額照会', text='check'),
                 MessageAction(label='判別予算状況照会', text='team_check'),
                 MessageAction(label='全体の残高照会',text='budget'),
