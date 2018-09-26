@@ -39,6 +39,8 @@ import Notifer as notif
 import EnviromentVar as envi
 import budgetHandler as budget
 
+VERSION='0.0.1'
+
 app = Flask(__name__)
 
 # get channel_secret and channel_access_token from your environment variabl
@@ -217,7 +219,7 @@ def handle_text_message(event):
     elif text == 'about' and isRegistered:
         userdata = db.Search('at', event.source.user_id)
         menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
-            title='KBISについて', text='Twitter @reudest \r\n Source:\r\nGithub reud/moduled-KBIS',
+            title='KBISについて', text=f'Kohken Balance Inquiry System\nVersion {VERSION}\n\n2018 GitHub@reud moduled-KBIS',
             actions=[  # リストにタプルなので注意
                 MessageAction(label='メニューに戻る', text='menu'),
             ])
