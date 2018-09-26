@@ -40,18 +40,23 @@ import EnviromentVar as envi
 import budgetHandler as budget
 
 VERSION='0.0.1'
-
+VERSION_NAME='TZBNV'
 app = Flask(__name__)
 
 # get channel_secret and channel_access_token from your environment variabl
 
 bud = budget.Budget()
 
+if not bud.receipts_and_expenditure:
+    notif.output('Error:会計管理簿が読めていない可能性があります。')
+    notif.output('出納の値がNoneになっていました。')
+    exit(1)
+
+
 try:
-    print(bud.budget_reserve_fund)
     db = Database.DataBases()
+    notif.output('db　LINE_IDの登録されているメンバーを表示します。')
     print(db.Search('at', 'all'))
-    print(db.renew())
 except:
     notif.output(traceback.format_exc())
     exit(0)
@@ -110,8 +115,11 @@ def handle_text_message(event):
         try:
             userdata = db.Search('at', event.source.user_id)  # リストを取得　内容はDatabase.pyを確認
             isRegistered = True
+            notif.output('ユーザは登録済でした。')
+            notif.output(f'現在ユーザの情報: {userdata}')
         except KeyError:
             isRegistered = False
+            notif.output('未登録のユーザです。')
 
 
     print(is_register_mode)
@@ -119,6 +127,7 @@ def handle_text_message(event):
 
 
     if text == 'menu' and isRegistered:  # 登録済みか確認したい
+        notif.output('登録済ユーザーメニューの表示に移行します。')
         print(userdata)
         menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
             title=f'ようこそ{userdata[0][1]}さん', text='\n入出金データは午前5時30分から6時間間隔で更新されます。\n最新でない可能性もあるのでご了承ください', actions=[  # リストにタプルなので注意
@@ -219,7 +228,7 @@ def handle_text_message(event):
     elif text == 'about' and isRegistered:
         userdata = db.Search('at', event.source.user_id)
         menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
-            title='KBISについて', text=f'Kohken Balance Inquiry System\nVersion {VERSION}\n\n2018 GitHub@reud moduled-KBIS',
+            title='KBISについて', text=f'Kohken Balance Inquiry System\nVersion {VERSION} ({VERSION_NAME})\n\n2018 GitHub@reud moduled-KBIS',
             actions=[  # リストにタプルなので注意
                 MessageAction(label='メニューに戻る', text='menu'),
             ])
