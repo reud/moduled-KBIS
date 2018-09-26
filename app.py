@@ -46,7 +46,8 @@ app = Flask(__name__)
 # get channel_secret and channel_access_token from your environment variabl
 
 bud = budget.Budget()
-
+bud.renew()
+print(bud.budget_reserve_fund)
 if not bud.receipts_and_expenditure:
     notif.output('Error:会計管理簿が読めていない可能性があります。')
     notif.output('出納の値がNoneになっていました。')
@@ -109,6 +110,7 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
     global is_register_mode
+    bud.renew()
     text = event.message.text
     notif.output(f'メッセージが届きました。内容:\n{text}')
     if isinstance(event.source, SourceUser):  # ユーザが登録済みか確認　登録済みなら本名を入手しておく
@@ -153,7 +155,6 @@ def handle_text_message(event):
         )
         line_bot_api.reply_message(event.reply_token, template_message)
     elif text=='budget' and isRegistered:
-        bud.renew()
         menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
             title='全体の残高照会', text=f'全体の関係残高は{bud.receipts_and_expenditure:,}円です。', actions=[  # リストにタプルなので注意
                 MessageAction(label='メニューに戻る', text='menu'),
@@ -186,7 +187,6 @@ def handle_text_message(event):
                     TextSendMessage(text='再度menuと打ってメニューを閲覧してください。')
                 ]
             )
-            db.renew()
             isRegistered = True
             is_register_mode = False
         except KeyError:
@@ -209,7 +209,6 @@ def handle_text_message(event):
             alt_text=f'あなたの滞納額は{userdata[0][3]:,}円です', template=menu_buttons)
         line_bot_api.reply_message(event.reply_token, template_message)
     elif text == 'team_check' and isRegistered:
-        bud.renew()
         line_bot_api.reply_message(
             event.reply_token, [
                 TextSendMessage(

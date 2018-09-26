@@ -55,7 +55,7 @@ class DataBases(object):
 
     def CreateUsersFromSheet(self, gen):  # SQLに追加できるように手に入れたデータを変換する
         userList = []
-        moneybook = openpyxl.load_workbook(self.moneyBook)
+        moneybook = openpyxl.load_workbook(self.moneyBook,read_only=True)
         sheet = moneybook[f'{gen}G']
 
         userbook = openpyxl.load_workbook(self.userBook)
@@ -104,7 +104,7 @@ class DataBases(object):
                                  sheet.cell(row=(user + 3), column=5).value, authority))
             else:
                 pass
-        moneybook.save(self.moneyBook)
+        moneybook.close()
         userbook.save(self.userBook)
         print(userList)
         return userList
@@ -125,7 +125,7 @@ class DataBases(object):
         createLINEUserTable = '''create table if not exists LINEExistsUser(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
         self.cursor.execute(createLINEUserTable)
 
-        workbook = openpyxl.load_workbook(self.moneyBook)
+        workbook = openpyxl.load_workbook(self.moneyBook,read_only=True)
         for i in range(self.MINGEN, self.MAXGEN):
             try:
                 sheet = workbook['{0}G'.format(i)]
