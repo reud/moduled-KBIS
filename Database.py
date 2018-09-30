@@ -38,12 +38,16 @@ class DataBases(object):
 
         notif.output('DataBase 4/5 ユーザの追加を終了しました。エクセルファイルを読み込みます。')
 
+        moneybook = openpyxl.load_workbook(self.moneyBook,read_only=True)
+        userbook = openpyxl.load_workbook(self.userBook)
+
         for i in range(self.MINGEN, self.MAXGEN):
             try:
-                self.cursor.executemany(self.sql, self.CreateUsersFromSheet(i))
+                self.cursor.executemany(self.sql, self.CreateUsersFromSheet(i,moneybook,userbook))
             except KeyError:
                 notif.output(traceback.format_exc())
-
+        moneybook.close()
+        userbook.save(self.userBook)
         notif.output('DataBase 5/5 読み込みが完了しました。')
         print('ユーザ全体のリストを表示します。')
 
@@ -53,12 +57,10 @@ class DataBases(object):
         self.cursor.close()
         linelist = self.Search('at', 'all')
 
-    def CreateUsersFromSheet(self, gen):  # SQLに追加できるように手に入れたデータを変換する
+    def CreateUsersFromSheet(self, gen,moneybook,userbook):  # SQLに追加できるように手に入れたデータを変換する
         userList = []
-        moneybook = openpyxl.load_workbook(self.moneyBook,read_only=True)
         sheet = moneybook[f'{gen}G']
 
-        userbook = openpyxl.load_workbook(self.userBook)
         sheetTB = userbook[envi.USERLIST_DATA_SHEETNAME]
 
         for user in range(1, envi.MAXUSER_BY_GEN):
@@ -104,8 +106,7 @@ class DataBases(object):
                                  sheet.cell(row=(user + 3), column=5).value, authority))
             else:
                 pass
-        moneybook.close()
-        userbook.save(self.userBook)
+
         print(userList)
         return userList
 
@@ -126,13 +127,16 @@ class DataBases(object):
         self.cursor.execute(createLINEUserTable)
 
         workbook = openpyxl.load_workbook(self.moneyBook,read_only=True)
+        moneybook = openpyxl.load_workbook(self.moneyBook,read_only=True)
+        userbook = openpyxl.load_workbook(self.userBook)
+
         for i in range(self.MINGEN, self.MAXGEN):
             try:
-                sheet = workbook['{0}G'.format(i)]
-                self.cursor.executemany(self.sql, self.CreateUsersFromSheet(i))
+                self.cursor.executemany(self.sql, self.CreateUsersFromSheet(i,moneybook,userbook))
             except KeyError:
-                break
-
+                notif.output(traceback.format_exc())
+        moneybook.close()
+        userbook.save(self.userBook)
         print('ユーザ全体のリストを表示します。')
 
         for i in self.cursor.execute('''select * from users'''):
