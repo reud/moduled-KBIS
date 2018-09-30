@@ -12,5 +12,5 @@ def output(strings: str,how=envi.OUTPUT_MODE):
         headders={'Authorization':'Bearer '+token}
         message=strings
         payload={'message':message}
-        res=requests.post(url,data=payload,headders=headders)
+        res=requests.post(url,data=payload,headers=headders)
         print(f'LINENotify:{res}')
