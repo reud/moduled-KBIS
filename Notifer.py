@@ -9,7 +9,7 @@ def output(strings: str,how=envi.OUTPUT_MODE):
         print(strings)
         url='https://notify-api.line.me/api/notify'
         token=envi.LINENOTIFY_TOKEN
-        headders={'Authorization':'Bearer'+token}
+        headders={'Authorization':'Bearer '+token}
         message=strings
         payload={'message':message}
         res=requests.post(url,data=payload,headders=headders)
