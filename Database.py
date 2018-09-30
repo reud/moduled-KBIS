@@ -70,7 +70,7 @@ class DataBases(object):
                 if (sheet.cell(row=(user + 3), column=debt).value):
                     try:
                         sum += int(sheet.cell(row=(user + 3), column=debt).value)
-                    except TypeError:  # 多分空白の時に発生するので読み飛ばし
+                    except:  # 多分空白の時に発生するので読み飛ばし
                         pass
 
             # LINEアカウントとの結びつけ
