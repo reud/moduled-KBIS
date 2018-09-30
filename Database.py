@@ -111,22 +111,33 @@ class DataBases(object):
         return userList
 
     def renew(self):  # 一回全部消すか・・・
+        self.MAXGEN = envi.KBIS_MAXGEN
+        self.MINGEN = envi.KBIS_MINGEN
+
+        notif.output('DataBase 1/5 メモリ内のデータベースを確認しています。')
+
+        try:
+            os.remove(envi.DATABASE_PLACE)  # for memory leak interrupt
+        except:
+            notif.output(traceback.format_exc())
+
+        notif.output('DataBase 2/5 データベースに接続します。')
+
+        self.userBook = envi.USERLIST_DATA_DIRECTRY
+        self.moneyBook = envi.MANAGEBOOK_PLACE
+
         self.db = sqlite3.connect(envi.DATABASE_PLACE)
         self.cursor = self.db.cursor()
-        delete_usersql = '''drop table users'''
-        delete_linesql = '''drop table LINEExistsUser'''
-        try:
-            self.cursor.execute(delete_usersql)
-            self.cursor.execute(delete_linesql)
-        except:
-            traceback.print_exc()
-        create_table = '''create table if not exists users(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
-        self.cursor.execute(create_table)
-        self.sql = 'insert into users (gen,realname,userId,money,remarks,authority) values (?,?,?,?,?,?)'
-        createLINEUserTable = '''create table if not exists LINEExistsUser(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
-        self.cursor.execute(createLINEUserTable)
 
-        workbook = openpyxl.load_workbook(self.moneyBook,read_only=True)
+        notif.output('DataBase 3/5 データベースに接続しました。テーブルの作成、ユーザの追加を行います。')
+
+        # Table Make
+        create_table = '''create table users(gen int,realname TEXT,userId TEXT,money int,remarks TEXT,authority TEXT,UNIQUE (realname,userId)) '''
+        self.sql = 'insert into users (gen,realname,userId,money,remarks,authority) values (?,?,?,?,?,?)'
+        self.cursor.execute(create_table)
+
+        notif.output('DataBase 4/5 ユーザの追加を終了しました。エクセルファイルを読み込みます。')
+
         moneybook = openpyxl.load_workbook(self.moneyBook,read_only=True)
         userbook = openpyxl.load_workbook(self.userBook)
 
@@ -137,18 +148,14 @@ class DataBases(object):
                 notif.output(traceback.format_exc())
         moneybook.close()
         userbook.save(self.userBook)
+        notif.output('DataBase 5/5 読み込みが完了しました。')
         print('ユーザ全体のリストを表示します。')
 
         for i in self.cursor.execute('''select * from users'''):
             print(i)
-
-        select_sql = 'select * from users'
-        for row in self.cursor.execute(select_sql):
-            print(row)
-        workbook.save(self.moneyBook)
         self.db.commit()
-
         self.cursor.close()
+        linelist = self.Search('at', 'all')
 
     def Search(self, word1: str, word2: str) -> list:
         self.db = sqlite3.connect(envi.DATABASE_PLACE)

@@ -112,6 +112,7 @@ def handle_text_message(event):
     global is_register_mode
     bud.renew()
     text = event.message.text
+
     notif.output(f'メッセージが届きました。内容:\n{text}')
     if isinstance(event.source, SourceUser):  # ユーザが登録済みか確認　登録済みなら本名を入手しておく
         try:
@@ -129,6 +130,7 @@ def handle_text_message(event):
 
 
     if text == 'menu' and isRegistered:  # 登録済みか確認したい
+        db.renew()
         notif.output('登録済ユーザーメニューの表示に移行します。')
         print(userdata)
         menu_buttons = ButtonsTemplate(  # 一応登録済みの時のメニュー　アクションの最大数は4
